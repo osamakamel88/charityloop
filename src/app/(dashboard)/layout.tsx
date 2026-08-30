@@ -21,16 +21,16 @@ export default function DashboardLayout({
             {/* Dashboard Footer */}
             <footer className="mt-8 pt-4 border-t border-gray-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
               <p>© {new Date().getFullYear()} CharityLoop. جميع الحقوق محفوظة.</p>
-              <div className="flex items-center gap-1.5 font-medium">
-                <span>Developed & Designed by</span>
+              <div className="flex items-center gap-1.5 font-medium" dir="ltr">
+                <span className="text-gray-500">Developed & Designed by</span>
                 <a
                   href="https://www.linkedin.com/in/osama-kamel-dev/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1 underline underline-offset-2 transition-colors"
+                  className="text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1 hover:underline transition-colors"
                 >
                   Recode Developments
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
             </footer>

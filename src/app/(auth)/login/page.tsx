@@ -138,13 +138,13 @@ export default function LoginPage() {
       {/* Footer */}
       <div className="text-center text-xs text-gray-500 mt-6 space-y-1.5">
         <p>© {new Date().getFullYear()} CharityLoop. جميع الحقوق محفوظة.</p>
-        <p className="font-medium text-gray-600">
+        <p className="font-medium text-gray-600 inline-flex items-center justify-center gap-1" dir="ltr">
           Developed & Designed by{" "}
           <a
             href="https://www.linkedin.com/in/osama-kamel-dev/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1 underline underline-offset-2 transition-colors"
+            className="text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1 hover:underline transition-colors"
           >
             Recode Developments
           </a>
