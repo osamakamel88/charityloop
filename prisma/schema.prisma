@@ -1,0 +1,322 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   // ADMIN, MANAGER, EMPLOYEE, AUDITOR, VOLUNTEER
+  isActive  Boolean  @default(true)
+  avatar    String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  beneficiaries        Beneficiary[]
+  donations            Donation[]
+  expenses             Expense[]
+  inventoryTransactions InventoryTransaction[]
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+model Beneficiary {
+  id             String   @id @default(cuid())
+  nationalId     String   @unique
+  firstName      String
+  lastName       String
+  phone          String
+  email          String?
+  address        String
+  city           String
+  district       String
+  socialStatus   String   // SINGLE, MARRIED, DIVORCED, WIDOWED
+  familyMembers  Int
+  monthlyIncome  Float
+  needType       String
+  category       String   // ORPHAN, WIDOW, PATIENT, ELDERLY, POOR_FAMILY, STUDENT, OTHER
+  status         String   // NEW, UNDER_REVIEW, APPROVED, REJECTED, COMPLETED
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdById    String
+  createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  family         FamilyMember[]
+  documents      Document[]
+  fieldVisits    FieldVisit[]
+  donations      Donation[]
+  expenses       Expense[]
+  sponsorships   Sponsorship[]
+
+  @@index([nationalId])
+  @@index([status])
+  @@index([category])
+  @@map("beneficiaries")
+}
+
+model FamilyMember {
+  id            String      @id @default(cuid())
+  name          String
+  relation      String
+  age           Int
+  gender        String
+  notes         String?
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+
+  @@map("family_members")
+}
+
+model Document {
+  id            String       @id @default(cuid())
+  name          String
+  type          String
+  url           String
+  size          Int
+  beneficiaryId String?
+  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@map("documents")
+}
+
+model FieldVisit {
+  id             String      @id @default(cuid())
+  beneficiaryId  String
+  beneficiary    Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  visitDate      DateTime
+  visitor        String
+  notes          String?
+  recommendation String?
+  status         String      // PENDING, COMPLETED, CANCELLED
+  createdAt      DateTime    @default(now())
+
+  @@index([visitDate])
+  @@map("field_visits")
+}
+
+model Donation {
+  id            String       @id @default(cuid())
+  donorName     String
+  donorPhone    String?
+  donorEmail    String?
+  amount        Float
+  type          String       // CASH, ZAKAT, SADAQAH, KAFFARAH, IN_KIND, OTHER
+  channel       String       // BANK, APP, WEBSITE, BOX, DIRECT
+  description   String?
+  beneficiaryId String?
+  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  projectId     String?
+  project       Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  receiptNumber String?
+  date          DateTime
+  createdById   String
+  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime     @default(now())
+
+  @@index([date])
+  @@index([type])
+  @@map("donations")
+}
+
+model Expense {
+  id            String       @id @default(cuid())
+  amount        Float
+  type          String       // FINANCIAL_AID, RENT, MEDICAL, PROJECT, SALARY, UTILITIES, ADMIN, OTHER
+  description   String
+  beneficiaryId String?
+  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  projectId     String?
+  project       Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  budgetId      String?
+  budget        Budget?      @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  receiptNumber String?
+  date          DateTime
+  createdById   String
+  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime     @default(now())
+
+  @@index([date])
+  @@index([type])
+  @@map("expenses")
+}
+
+model Budget {
+  id          String    @id @default(cuid())
+  name        String
+  year        Int
+  month       Int?
+  totalAmount Float
+  spentAmount Float     @default(0)
+  category    String
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime  @default(now())
+
+  expenses    Expense[]
+
+  @@map("budgets")
+}
+
+model Project {
+  id               String   @id @default(cuid())
+  name             String
+  description      String
+  type             String   // SEASONAL, SPONSORSHIP, DISTRIBUTION, TRAINING, OTHER
+  season           String?  // RAMADAN, WINTER, BACK_TO_SCHOOL, ADHA, OTHER
+  status           String   // PLANNED, ACTIVE, COMPLETED, CANCELLED
+  startDate        DateTime
+  endDate          DateTime?
+  budget           Float
+  spent            Float    @default(0)
+  beneficiaryCount Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  phases           ProjectPhase[]
+  sponsorships     Sponsorship[]
+  donations        Donation[]
+  expenses         Expense[]
+
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectPhase {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  order       Int
+  status      String    // PENDING, IN_PROGRESS, COMPLETED
+  startDate   DateTime?
+  endDate     DateTime?
+
+  @@map("project_phases")
+}
+
+model Sponsorship {
+  id            String      @id @default(cuid())
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Restrict)
+  type          String      // ORPHAN, FAMILY, STUDENT
+  monthlyAmount Float
+  startDate     DateTime
+  endDate       DateTime?
+  status        String      // ACTIVE, PAUSED, COMPLETED, CANCELLED
+
+  @@index([status])
+  @@map("sponsorships")
+}
+
+model Volunteer {
+  id             String          @id @default(cuid())
+  name           String
+  phone          String
+  email          String?
+  skills         String
+  availability   String
+  area           String
+  specialization String          // DISTRIBUTION, TRAINING, FIELD_VISITS, ADMIN, OTHER
+  totalHours     Float           @default(0)
+  rating         Float?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+
+  tasks          VolunteerTask[]
+
+  @@map("volunteers")
+}
+
+model VolunteerTask {
+  id          String    @id @default(cuid())
+  volunteerId String
+  volunteer   Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  date        DateTime
+  hours       Float
+  status      String    // ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+
+  @@index([status])
+  @@map("volunteer_tasks")
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  unit        String
+  quantity    Int      @default(0)
+  minQuantity Int      @default(0)
+  barcode     String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions InventoryTransaction[]
+
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id          String        @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  type        String        // IN, OUT
+  quantity    Int
+  reason      String?
+  date        DateTime
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([date])
+  @@map("inventory_transactions")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // INFO, WARNING, SUCCESS, ERROR
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

@@ -1,0 +1,17 @@
+services:
+  charityloop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: charityloop_cms
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/charityloop.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-charityloop-production-secret-auth-key-2024-dezly}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://charityloop.dezly.vip}
