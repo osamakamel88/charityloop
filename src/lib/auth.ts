@@ -11,29 +11,50 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: {},
       },
       authorize: async (credentials) => {
-        if (!credentials?.email || !credentials?.password) {
-          return null
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
+
+        if (!email || !password) {
+          return null;
         }
-        
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
-        })
-        
-        if (!user || !user.password) {
-          return null
+
+        // Demo Admin credentials fallback (for serverless Vercel testing)
+        if (
+          email.toLowerCase().trim() === "admin@charityloop.com" &&
+          password === "admin123"
+        ) {
+          return {
+            id: "admin-master-user",
+            name: "المدير العام",
+            email: "admin@charityloop.com",
+            role: "ADMIN",
+          };
         }
-        
-        const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password)
-        
-        if (!isPasswordValid) {
-          return null
-        }
-        
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
+
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase().trim() },
+          });
+
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(password, user.password);
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          };
+        } catch (err) {
+          console.error("Auth DB lookup error:", err);
+          return null;
         }
       },
     }),
